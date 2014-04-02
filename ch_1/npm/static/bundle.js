@@ -1,8 +1,10 @@
-(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+require=(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({"2SFA6f":[function(require,module,exports){
 var Backbone = require('backbone');
-console.log(Backbone.VERSION);
+module.exports = function() { return Backbone };
 
-},{"backbone":2}],2:[function(require,module,exports){
+},{"backbone":3}],"app":[function(require,module,exports){
+module.exports=require('2SFA6f');
+},{}],3:[function(require,module,exports){
 //     Backbone.js 1.1.2
 
 //     (c) 2010-2014 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
@@ -1612,7 +1614,7 @@ console.log(Backbone.VERSION);
 
 }));
 
-},{"underscore":3}],3:[function(require,module,exports){
+},{"underscore":4}],4:[function(require,module,exports){
 //     Underscore.js 1.6.0
 //     http://underscorejs.org
 //     (c) 2009-2014 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
@@ -2957,4 +2959,4 @@ console.log(Backbone.VERSION);
   }
 }).call(this);
 
-},{}]},{},[1])
+},{}]},{},[])

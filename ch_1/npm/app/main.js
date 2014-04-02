@@ -1,2 +1,2 @@
 var Backbone = require('backbone');
-console.log(Backbone.VERSION);
+module.exports = function() { return Backbone };
