@@ -15,11 +15,12 @@ var Monitor = require('./monitor');
 var monitor = new Monitor(movies);
 
 var MovieView = require('views/movie');
+var MoviesList = require('views/moviesList');
 
-module.exports = { movies: movies, MovieView: MovieView };
+module.exports = { movies: movies, MovieView: MovieView, MoviesList: MoviesList };
 
 
-},{"../movies.json":7,"./monitor":3,"backbone":8,"collections/movies":4,"jquery-untouched":10,"views/movie":6}],3:[function(require,module,exports){
+},{"../movies.json":8,"./monitor":3,"backbone":9,"collections/movies":4,"jquery-untouched":11,"views/movie":6,"views/moviesList":7}],3:[function(require,module,exports){
 var _ = require('underscore');
 var Backbone = require('backbone');
 
@@ -31,7 +32,7 @@ var Backbone = require('backbone');
   }
   module.exports = Monitor;
 
-},{"backbone":8,"underscore":11}],4:[function(require,module,exports){
+},{"backbone":9,"underscore":12}],4:[function(require,module,exports){
     var Backbone = require('backbone');
     var Movie = require('models/movie');
     var Movies = Backbone.Collection.extend({
@@ -54,7 +55,7 @@ var Backbone = require('backbone');
     })
     module.exports = Movies;
 
-},{"backbone":8,"models/movie":5}],5:[function(require,module,exports){
+},{"backbone":9,"models/movie":5}],5:[function(require,module,exports){
 var Backbone = require("backbone");
   var Movie = Backbone.Model.extend({
     defaults: {
@@ -66,33 +67,56 @@ var Backbone = require("backbone");
   });
   module.exports = Movie;
 
-},{"backbone":8}],6:[function(require,module,exports){
+},{"backbone":9}],6:[function(require,module,exports){
 var Backbone = require('backbone');
 var _ = require('underscore');
 
 var MovieView = Backbone.View.extend({
   tagName: 'article',
   className: 'movie',
+  template: '<h1><%= title %><hr></h1>',
+
   render: function() {
-    console.log("**");
-    this.$el.html(this.model.get('title'));
+    var tmpl = _.template(this.template);
+    this.$el.html(tmpl(this.model.toJSON()));
     this.$el.toggleClass('selected', this.model.get('selected'));
     return this;
   },
   initialize: function() {
-    _.bindAll(this, "render");
-    console.log("..");
     this.listenTo(this.model, 'change:title', this.render);
   }
 });
 module.exports = MovieView;
 
-},{"backbone":8,"underscore":11}],7:[function(require,module,exports){
+},{"backbone":9,"underscore":12}],7:[function(require,module,exports){
+var Backbone = require('backbone');
+var _ = require('underscore');
+
+var MovieView = require('views/movie');
+var MoviesList = Backbone.View.extend({
+
+  tagName: 'section',
+
+  render: function() {
+    var moviesView = this.movies.map(function(movie) {
+      return (new MovieView({model : movie})).render().el;
+    });
+    this.$el.html(moviesView);
+    return this;
+  },
+
+  initialize: function() {
+    this.movies = this.collection;
+  }
+});
+module.exports = MoviesList;
+
+},{"backbone":9,"underscore":12,"views/movie":6}],8:[function(require,module,exports){
 module.exports=[ {"id": 1, "title": "The Artist" },
   {"id": 2, "title": "Taxi Driver"},
   {"id": 3, "title": "La Dolce Vita"} ]
 
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 //     Backbone.js 1.1.2
 
 //     (c) 2010-2014 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
@@ -1702,7 +1726,7 @@ module.exports=[ {"id": 1, "title": "The Artist" },
 
 }));
 
-},{"underscore":9}],9:[function(require,module,exports){
+},{"underscore":10}],10:[function(require,module,exports){
 //     Underscore.js 1.6.0
 //     http://underscorejs.org
 //     (c) 2009-2014 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
@@ -3047,7 +3071,7 @@ module.exports=[ {"id": 1, "title": "The Artist" },
   }
 }).call(this);
 
-},{}],10:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 /*!
  * jQuery JavaScript Library v1.10.2
  * http://jquery.com/
@@ -12838,6 +12862,6 @@ if ( typeof module === "object" && module && typeof module.exports === "object" 
 
 })( window );
 
-},{}],11:[function(require,module,exports){
-module.exports=require(9)
+},{}],12:[function(require,module,exports){
+module.exports=require(10)
 },{}]},{},[])

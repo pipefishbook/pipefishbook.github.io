@@ -12,6 +12,7 @@ var Monitor = require('./monitor');
 var monitor = new Monitor(movies);
 
 var MovieView = require('views/movie');
+var MoviesList = require('views/moviesList');
 
-module.exports = { movies: movies, MovieView: MovieView };
+module.exports = { movies: movies, MovieView: MovieView, MoviesList: MoviesList };
 
