@@ -1,6 +1,6 @@
 require=(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({"app":[function(require,module,exports){
-module.exports=require('+RrqZt');
-},{}],"+RrqZt":[function(require,module,exports){
+module.exports=require('38w9SO');
+},{}],"38w9SO":[function(require,module,exports){
 var Backbone = require('backbone');
 var $ = require('jquery-untouched');
 Backbone.$ = $;
@@ -74,12 +74,15 @@ var MovieView = Backbone.View.extend({
   tagName: 'article',
   className: 'movie',
   render: function() {
-     this.$el.html(this.model.get('title'));
-     this.$el.toggleClass('selected', this.model.get('selected'));
-     return this;
+    console.log("**");
+    this.$el.html(this.model.get('title'));
+    this.$el.toggleClass('selected', this.model.get('selected'));
+    return this;
   },
   initialize: function() {
     _.bindAll(this, "render");
+    console.log("..");
+    this.listenTo(this.model, 'change:title', this.render);
   }
 });
 module.exports = MovieView;
