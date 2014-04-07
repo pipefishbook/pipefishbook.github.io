@@ -33,29 +33,30 @@ var Backbone = require('backbone');
   module.exports = Monitor;
 
 },{"backbone":9,"underscore":12}],4:[function(require,module,exports){
-    var Backbone = require('backbone');
-    var Movie = require('models/movie');
-    var Movies = Backbone.Collection.extend({
-      model: Movie,
+var Backbone = require('backbone');
+var Movie = require('models/movie');
+var _ = require('underscore');
 
-      // Unselect all models
-      resetSelected: function() {
-        this.each(function(model) {
-          model.set({"selected": false}, {silent: true});
-        });
-      },
+var Movies = Backbone.Collection.extend({
+  model: Movie,
 
-      // Select a specific model from the collection
-      selectByID: function(id) {
-        this.resetSelected();
-        var movie = this.get(id);
-        movie.set({"selected": true});
-        return movie.id;
-      }
-    })
-    module.exports = Movies;
+  // Unselect all models
+  resetSelected: function() {
+    this.each(function(model) {
+      model.set({"selected": false});
+    });
+  },
 
-},{"backbone":9,"models/movie":5}],5:[function(require,module,exports){
+  // Select a specific model from the collection
+  selectByID: function(id) {
+    var movie = this.get(id);
+    movie.set({"selected": true});
+    return movie.id;
+  }
+})
+module.exports = Movies;
+
+},{"backbone":9,"models/movie":5,"underscore":12}],5:[function(require,module,exports){
 var Backbone = require("backbone");
   var Movie = Backbone.Model.extend({
     defaults: {
@@ -69,6 +70,7 @@ var Backbone = require("backbone");
 
 },{"backbone":9}],6:[function(require,module,exports){
 var Backbone = require('backbone');
+var $ = require('jquery-untouched');
 var _ = require('underscore');
 
 var MovieView = Backbone.View.extend({
@@ -76,6 +78,20 @@ var MovieView = Backbone.View.extend({
   className: 'movie',
   template: '<h1><%= title %><hr></h1>',
 
+  events: {
+    'click': 'selectMovie'
+  },
+
+  selectMovie: function(ev) {
+    ev.preventDefault();
+    // console.log($(ev.currentTarget).html());
+    console.log('event on ' + this.model.id);
+    if (!this.model.get('selected')) {
+      this.model.collection.resetSelected();
+      this.model.collection.selectByID(this.model.id);
+    }
+  },
+ 
   render: function() {
     var tmpl = _.template(this.template);
     this.$el.html(tmpl(this.model.toJSON()));
@@ -84,11 +100,12 @@ var MovieView = Backbone.View.extend({
   },
   initialize: function() {
     this.listenTo(this.model, 'change:title', this.render);
+    this.listenTo(this.model, 'change:selected', this.render);
   }
 });
 module.exports = MovieView;
 
-},{"backbone":9,"underscore":12}],7:[function(require,module,exports){
+},{"backbone":9,"jquery-untouched":11,"underscore":12}],7:[function(require,module,exports){
 var Backbone = require('backbone');
 var _ = require('underscore');
 
@@ -98,7 +115,7 @@ var MoviesList = Backbone.View.extend({
   tagName: 'section',
 
   render: function() {
-    var moviesView = this.movies.map(function(movie) {
+    var moviesView = this.collection.map(function(movie) {
       return (new MovieView({model : movie})).render().el;
     });
     this.$el.html(moviesView);
