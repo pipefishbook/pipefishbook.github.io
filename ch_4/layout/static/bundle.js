@@ -23,6 +23,10 @@ var _ = require('underscore');
 var Movies = Backbone.Collection.extend({
   model: Movie,
 
+  getSelected: function() {
+    return this.pluck('selected').indexOf(true);
+  },
+
   // Unselect all models
   resetSelected: function() {
     this.each(function(model) {
@@ -75,15 +79,16 @@ var MoviesRouter = Backbone.Router.extend({
   },
   selectMovie: function(id) {
     console.log("+");
-    moviesList = MoviesList.getInstance({el: '#movies', collection: movies, router: this});
-    moviesList.render();
+    movies.resetSelected();
     movies.selectByID(id);
   },
   showMain: function() {
     console.log("-");
+    movies.resetSelected();
+    moviesList.render();
+  },
+  initialize: function() {
     moviesList = MoviesList.getInstance({el: '#movies', collection: movies, router: this});
-    moviesList.render();
-    moviesList.render();
   }
 });
 module.exports = MoviesRouter;
@@ -146,18 +151,21 @@ var MoviesList = Backbone.View.extend({
   },
 
   initialize: function(options) {
-    this.movies = this.collection;
     this.router = options.router;
   }
 });
 
+var instance;
 MoviesList.getInstance = function(options) {
+  // console.log(options.collection.getSelected());
 
-    var instance;
-    if (!instance) {
-      instance = new MoviesList({collection: movies, el: options.el, collection: options.collection, router: options.router});
-    }
-    return instance;
+  if (!instance) {
+    instance = new MoviesList({
+      el: options.el,
+      collection: options.collection,
+      router: options.router});
+  }
+  return instance;
 }
 
 module.exports = MoviesList;

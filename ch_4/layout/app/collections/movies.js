@@ -5,6 +5,10 @@ var _ = require('underscore');
 var Movies = Backbone.Collection.extend({
   model: Movie,
 
+  getSelected: function() {
+    return this.pluck('selected').indexOf(true);
+  },
+
   // Unselect all models
   resetSelected: function() {
     this.each(function(model) {

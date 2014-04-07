@@ -16,22 +16,21 @@ var MoviesList = Backbone.View.extend({
   },
 
   initialize: function(options) {
-    this.movies = this.collection;
     this.router = options.router;
   }
 });
 
+var instance;
 MoviesList.getInstance = function(options) {
+  // console.log(options.collection.getSelected());
 
-    var instance;
-    if (!instance) {
-      instance = new MoviesList({
-        el: options.el,
-        collection: options.collection,
-        router: options.router
-      });
-    }
-    return instance;
+  if (!instance) {
+    instance = new MoviesList({
+      el: options.el,
+      collection: options.collection,
+      router: options.router});
+  }
+  return instance;
 }
 
 module.exports = MoviesList;
