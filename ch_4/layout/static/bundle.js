@@ -79,6 +79,7 @@ var MoviesRouter = Backbone.Router.extend({
   },
   selectMovie: function(id) {
     console.log("+");
+    moviesList.render();
     movies.resetSelected();
     movies.selectByID(id);
   },
@@ -88,7 +89,9 @@ var MoviesRouter = Backbone.Router.extend({
     moviesList.render();
   },
   initialize: function() {
-    moviesList = MoviesList.getInstance({el: '#movies', collection: movies, router: this});
+    moviesList = MoviesList.getInstance({
+      el: '#movies', collection: movies, router: this
+    });
   }
 });
 module.exports = MoviesRouter;
