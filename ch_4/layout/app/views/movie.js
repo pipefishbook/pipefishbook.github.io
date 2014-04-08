@@ -15,8 +15,6 @@ var MovieView = Backbone.View.extend({
     // console.log($(ev.currentTarget).html());
     console.log('event on ' + this.model.id);
     if (!this.model.get('selected')) {
-      this.model.collection.resetSelected();
-      this.model.collection.selectByID(this.model.id);
       this.router.navigate("/movies/" + this.model.id, {trigger: true});
     }
   },

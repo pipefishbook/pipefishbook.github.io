@@ -7,7 +7,7 @@ var MoviesRouter = require('routers/movies');
 
 $(document).ready(function() {
   console.log('init');
-  var router = new MoviesRouter();
+  var router = new MoviesRouter({el: $('#movies') });
   Backbone.history.start({
     pushState: true,
     root: '/'
@@ -68,30 +68,31 @@ var movies = new Movies(data);
 var Movies = require('collections/movies');
 var MoviesList = require('views/moviesList');
 
-var movies = new Movies(data);
-
-var moviesList;
-
 var MoviesRouter = Backbone.Router.extend({
+
   routes: {
-    'movies/:id':    'selectMovie',
-    '':              'showMain'
+    'movies/:id': 'selectMovie',
+    '':           'showMain'
   },
+
   selectMovie: function(id) {
-    console.log("+");
-    moviesList.render();
-    movies.resetSelected();
-    movies.selectByID(id);
+    this.movies.resetSelected();
+    this.movies.selectByID(id);
+    this.moviesList.render();
   },
+
   showMain: function() {
-    console.log("-");
-    movies.resetSelected();
-    moviesList.render();
+    this.movies.resetSelected();
+    this.moviesList.render();
   },
-  initialize: function() {
-    moviesList = MoviesList.getInstance({
-      el: '#movies', collection: movies, router: this
+
+  initialize: function(options) {
+    this.movies = movies;
+    this.moviesList = new MoviesList({
+      el: options.el,
+      collection: movies
     });
+    _.extend(this.moviesList, {router: this});
   }
 });
 module.exports = MoviesRouter;
@@ -114,8 +115,6 @@ var MovieView = Backbone.View.extend({
     // console.log($(ev.currentTarget).html());
     console.log('event on ' + this.model.id);
     if (!this.model.get('selected')) {
-      this.model.collection.resetSelected();
-      this.model.collection.selectByID(this.model.id);
       this.router.navigate("/movies/" + this.model.id, {trigger: true});
     }
   },
@@ -166,7 +165,8 @@ MoviesList.getInstance = function(options) {
     instance = new MoviesList({
       el: options.el,
       collection: options.collection,
-      router: options.router});
+      router: options.router
+    });
   }
   return instance;
 }

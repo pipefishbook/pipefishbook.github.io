@@ -9,6 +9,14 @@
   .movie h1 {
     font-size: 16px;
   }
+
+ .movie a {
+      color: white;
+  }
+
+  .selected a {
+      color: #ffff7f;
+  }
   
   .details {
       width: 240px;
