@@ -10,8 +10,6 @@ var movies = new Movies(data);
 var Movies = require('collections/movies');
 var MoviesList = require('views/moviesList');
 
-var movies = new Movies(data);
-
 var moviesList;
 
 var MoviesRouter = Backbone.Router.extend({

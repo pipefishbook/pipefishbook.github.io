@@ -28,7 +28,8 @@ MoviesList.getInstance = function(options) {
     instance = new MoviesList({
       el: options.el,
       collection: options.collection,
-      router: options.router});
+      router: options.router
+    });
   }
   return instance;
 }
