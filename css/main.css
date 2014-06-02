@@ -4,8 +4,64 @@ body {
   font-family: Helvetica Neue, Helvetica, Arial;
   background: #f4f4f4 url(images/background.png);
 }
+
+header {
+  width: 100%;
+  padding: 10px;
+  background-color: white;
+}
+
+.header-wrapper {
+  margin: 0 auto;
+}
+
+nav ul {
+  list-style: none;
+}
+
+nav ul li {
+  display: inline-block;
+  width: 18%;
+}
+
+.toc li {
+	position: relative;
+	font-size: 1em;
+	cursor: pointer;
+}
+
+.toc li {
+  text-align: left;
+  width: 100%;
+  padding: .6em 0 ;
+  color: gray;
+  border-left:3px solid #f7f7f7;
+}
+
+.toc {
+  width: 14em;
+  position: absolute;
+  z-index: 2;
+  left: 5%;
+  border: 1px #ffff00 solid;
+  background-color: white;
+  padding-left: 10px;
+}
+
+.toc-inner {
+  width: 13em;
+  background: white;
+  float: left;
+  position: relative;
+  margin-top: 0;
+}
+
+.toc ul {
+  padding: .3em 0;
+  margin:0
+ }
+
 .interface {
-  font-family: "Lucida Grande", "Lucida Sans Unicode", Helvetica, Arial, sans-serif !important;
 }
 div#sidebar {
   background: #fff;
