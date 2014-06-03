@@ -11,7 +11,7 @@ $(document).ready(function() {
 });
 
 
-},{"backbone":9,"jquery-untouched":18,"routers/main":2}],2:[function(require,module,exports){
+},{"backbone":14,"jquery-untouched":23,"routers/main":2}],2:[function(require,module,exports){
 var Backbone = require('backbone');
 
 var Navbar = require('views/navbar');
@@ -23,23 +23,22 @@ var Main = Backbone.Router.extend({
     'toc': 'showTOC',
     'examples': 'showExamples',
     'references': 'showReferences',
-    'chapters': 'showChapter',
+    'chapters/:id': 'showChapter',
     'about': 'showAbout'
   },
 
   showTOC: function() {
     this.navbar.addToc();
-    this.navbar.render();
   },
 
   showChapter: function(id) {
-
+    this.navbar.removeToc();
+    this.layout.showChapter(id);
   },
 
   showExamples: function() {
     this.navbar.removeToc();
-    this.navbar.render();
-    this.layout.render();
+    this.layout.showExamples();
   },
 
   showReferences: function() {
@@ -53,14 +52,31 @@ var Main = Backbone.Router.extend({
   initialize: function() {
     this.navbar = new Navbar({el: '#navbar'});
     this.navbar.render();
-    this.layout = new Layout({el: '#container'});
+    this.layout = new Layout({el: '#main'});
   }
 
 
 });
 module.exports = Main;
 
-},{"backbone":9,"views/layout":6,"views/navbar":7}],3:[function(require,module,exports){
+},{"backbone":14,"views/layout":10,"views/navbar":11}],3:[function(require,module,exports){
+// hbsfy compiled Handlebars template
+var Handlebars = require('hbsfy/runtime');
+module.exports = Handlebars.template(function (Handlebars,depth0,helpers,partials,data) {
+  this.compilerInfo = [4,'>= 1.0.0'];
+helpers = this.merge(helpers, Handlebars.helpers); data = data || {};
+  var buffer = "", stack1, helper, functionType="function", escapeExpression=this.escapeExpression;
+
+
+  buffer += "<h1>Chapter ";
+  if (helper = helpers.id) { stack1 = helper.call(depth0, {hash:{},data:data}); }
+  else { helper = (depth0 && depth0.id); stack1 = typeof helper === functionType ? helper.call(depth0, {hash:{},data:data}) : helper; }
+  buffer += escapeExpression(stack1)
+    + "</h1>\n";
+  return buffer;
+  });
+
+},{"hbsfy/runtime":22}],4:[function(require,module,exports){
 // hbsfy compiled Handlebars template
 var Handlebars = require('hbsfy/runtime');
 module.exports = Handlebars.template(function (Handlebars,depth0,helpers,partials,data) {
@@ -69,10 +85,10 @@ helpers = this.merge(helpers, Handlebars.helpers); data = data || {};
   
 
 
-  return "hello world\n";
+  return "<h1>Examples</h1>\n\n<ul>\n  <li>Chapter 1</h1>\n  <li>Chapter 2</h1>\n  <li>Chapter 3</h1>\n</ul>\n";
   });
 
-},{"hbsfy/runtime":17}],4:[function(require,module,exports){
+},{"hbsfy/runtime":22}],5:[function(require,module,exports){
 // hbsfy compiled Handlebars template
 var Handlebars = require('hbsfy/runtime');
 module.exports = Handlebars.template(function (Handlebars,depth0,helpers,partials,data) {
@@ -84,7 +100,7 @@ helpers = this.merge(helpers, Handlebars.helpers); data = data || {};
   return "<ul>\n  <li><a href=\"#toc\">The Book</a></li>\n  <li><a href=\"#examples\">Examples</a></li>\n  <li><a href=\"http://backbone-like.herokuapp.com\">Munich Cinema (demo)</a></li>\n  <li><a href=\"#references\">Further References</a></li>\n  <li><a href=\"#about\">About Me</a></li>\n</ul>\n";
   });
 
-},{"hbsfy/runtime":17}],5:[function(require,module,exports){
+},{"hbsfy/runtime":22}],6:[function(require,module,exports){
 // hbsfy compiled Handlebars template
 var Handlebars = require('hbsfy/runtime');
 module.exports = Handlebars.template(function (Handlebars,depth0,helpers,partials,data) {
@@ -96,14 +112,47 @@ helpers = this.merge(helpers, Handlebars.helpers); data = data || {};
   return "\n<h1>Table of Contents</h1>\n\n<div class=\"toc-inner\">\n  <ul>\n    <li><a href=\"#chapters/1\">The Bigger Picture</a></li>\n    <li><a href=\"#chapters/2\">Kick-Starting Application Development</a></li>\n    <li><a href=\"#chapters/3\">Building the User Interface</a></li>\n    <li><a href=\"#chapters/4\">Router Basics</a></li>\n    <li><a href=\"#chapters/5\">Transforming Collections</a></li>\n    <li><a href=\"#chapters/6\">Advanced View Templates</a></li>\n    <li><a href=\"#chapters/7\">Synchronizing State</a></li>\n    <li><a href=\"#chapters/8\">Basic API Concerns</a></li>\n    <li><a href=\"#chapters/9\">Authentication</a></li>\n    <li><a href=\"#chapters/10\">Automated Workflows</a></li>\n    <li><a href=\"#chapters/11\">From Backbone To Thorax</a></li>\n    <li><a href=\"#chapters/A\">Appendix</li>\n  </ul>\n</div>\n";
   });
 
-},{"hbsfy/runtime":17}],6:[function(require,module,exports){
+},{"hbsfy/runtime":22}],7:[function(require,module,exports){
+// hbsfy compiled Handlebars template
+var Handlebars = require('hbsfy/runtime');
+module.exports = Handlebars.template(function (Handlebars,depth0,helpers,partials,data) {
+  this.compilerInfo = [4,'>= 1.0.0'];
+helpers = this.merge(helpers, Handlebars.helpers); data = data || {};
+  
+
+
+  return "hello world\n";
+  });
+
+},{"hbsfy/runtime":22}],8:[function(require,module,exports){
 var Backbone = require('backbone');
 
-var layoutTemplate = require('templates/layout.hbs');
+var chapterTemplate = require('templates/chapter.hbs');
 
-var Layout = Backbone.View.extend({
+var Chapter = Backbone.View.extend({
 
-  template: layoutTemplate,
+  template: chapterTemplate,
+
+  render: function() {
+    this.$el.html(this.template({id: this.id}));
+    return this;
+  },
+
+  initialize: function(options) {
+    this.id = options.id;
+  }
+
+});
+module.exports = Chapter;
+
+},{"backbone":14,"templates/chapter.hbs":3}],9:[function(require,module,exports){
+var Backbone = require('backbone');
+
+var examplesTemplate = require('templates/examples.hbs');
+
+var Examples = Backbone.View.extend({
+
+  template: examplesTemplate,
 
   render: function() {
     this.$el.html(this.template());
@@ -111,9 +160,46 @@ var Layout = Backbone.View.extend({
   }
 
 });
+module.exports = Examples;
+
+},{"backbone":14,"templates/examples.hbs":4}],10:[function(require,module,exports){
+var Backbone = require('backbone');
+
+var WelcomeView = require('views/welcome');
+var ChapterView = require('views/chapter');
+var ExamplesView = require('views/examples');
+
+var Layout = Backbone.View.extend({
+
+  render: function() {
+    this.$el.html(this.view.render().el);
+    return this;
+  },
+
+  showChapter: function(id) {
+    if (this.view) {
+      this.view.remove();
+    }
+    this.view = new ChapterView({id: id});
+    this.render();
+  },
+
+  showExamples: function() {
+    if (this.view) {
+      this.view.remove();
+    }
+    this.view = new ExamplesView();
+    this.render();
+  },
+
+  initialize: function() {
+    this.view = new WelcomeView();
+  }
+
+});
 module.exports = Layout;
 
-},{"backbone":9,"templates/layout.hbs":3}],7:[function(require,module,exports){
+},{"backbone":14,"views/chapter":8,"views/examples":9,"views/welcome":13}],11:[function(require,module,exports){
 var Backbone = require('backbone');
 
 var navbarTemplate = require('templates/navbar.hbs');
@@ -135,7 +221,6 @@ var Navbar = Backbone.View.extend({
       that.removeToc();
     } else {
       that.addToc();
-      that.render();
     }
   },
 
@@ -150,6 +235,7 @@ var Navbar = Backbone.View.extend({
 
   addToc: function() {
     this.toc = new Toc();
+    this.render();
   },
 
   removeToc: function() {
@@ -158,12 +244,13 @@ var Navbar = Backbone.View.extend({
       that.toc.remove();
     }
     this.toc = null;
+    this.render();
   }
 
 });
 module.exports = Navbar;
 
-},{"backbone":9,"templates/navbar.hbs":4,"templates/toc.hbs":5,"views/toc":8}],8:[function(require,module,exports){
+},{"backbone":14,"templates/navbar.hbs":5,"templates/toc.hbs":6,"views/toc":12}],12:[function(require,module,exports){
 var Backbone = require('backbone');
 
 var tocTemplate = require('templates/toc.hbs');
@@ -182,7 +269,24 @@ var Toc = Backbone.View.extend({
 });
 module.exports = Toc;
 
-},{"backbone":9,"templates/toc.hbs":5}],9:[function(require,module,exports){
+},{"backbone":14,"templates/toc.hbs":6}],13:[function(require,module,exports){
+var Backbone = require('backbone');
+
+var welcomeTemplate = require('templates/welcome.hbs');
+
+var Welcome = Backbone.View.extend({
+
+  template: welcomeTemplate,
+
+  render: function() {
+    this.$el.html(this.template());
+    return this;
+  }
+
+});
+module.exports = Welcome;
+
+},{"backbone":14,"templates/welcome.hbs":7}],14:[function(require,module,exports){
 //     Backbone.js 1.1.2
 
 //     (c) 2010-2014 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
@@ -1792,7 +1896,7 @@ module.exports = Toc;
 
 }));
 
-},{"underscore":19}],10:[function(require,module,exports){
+},{"underscore":24}],15:[function(require,module,exports){
 "use strict";
 /*globals Handlebars: true */
 var base = require("./handlebars/base");
@@ -1825,7 +1929,7 @@ var Handlebars = create();
 Handlebars.create = create;
 
 exports["default"] = Handlebars;
-},{"./handlebars/base":11,"./handlebars/exception":12,"./handlebars/runtime":13,"./handlebars/safe-string":14,"./handlebars/utils":15}],11:[function(require,module,exports){
+},{"./handlebars/base":16,"./handlebars/exception":17,"./handlebars/runtime":18,"./handlebars/safe-string":19,"./handlebars/utils":20}],16:[function(require,module,exports){
 "use strict";
 var Utils = require("./utils");
 var Exception = require("./exception")["default"];
@@ -2006,7 +2110,7 @@ exports.log = log;var createFrame = function(object) {
   return obj;
 };
 exports.createFrame = createFrame;
-},{"./exception":12,"./utils":15}],12:[function(require,module,exports){
+},{"./exception":17,"./utils":20}],17:[function(require,module,exports){
 "use strict";
 
 var errorProps = ['description', 'fileName', 'lineNumber', 'message', 'name', 'number', 'stack'];
@@ -2035,7 +2139,7 @@ function Exception(message, node) {
 Exception.prototype = new Error();
 
 exports["default"] = Exception;
-},{}],13:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 "use strict";
 var Utils = require("./utils");
 var Exception = require("./exception")["default"];
@@ -2173,7 +2277,7 @@ exports.program = program;function invokePartial(partial, name, context, helpers
 exports.invokePartial = invokePartial;function noop() { return ""; }
 
 exports.noop = noop;
-},{"./base":11,"./exception":12,"./utils":15}],14:[function(require,module,exports){
+},{"./base":16,"./exception":17,"./utils":20}],19:[function(require,module,exports){
 "use strict";
 // Build out our basic SafeString type
 function SafeString(string) {
@@ -2185,7 +2289,7 @@ SafeString.prototype.toString = function() {
 };
 
 exports["default"] = SafeString;
-},{}],15:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 "use strict";
 /*jshint -W004 */
 var SafeString = require("./safe-string")["default"];
@@ -2262,15 +2366,15 @@ exports.escapeExpression = escapeExpression;function isEmpty(value) {
 }
 
 exports.isEmpty = isEmpty;
-},{"./safe-string":14}],16:[function(require,module,exports){
+},{"./safe-string":19}],21:[function(require,module,exports){
 // Create a simple path alias to allow browserify to resolve
 // the runtime on a supported path.
 module.exports = require('./dist/cjs/handlebars.runtime');
 
-},{"./dist/cjs/handlebars.runtime":10}],17:[function(require,module,exports){
+},{"./dist/cjs/handlebars.runtime":15}],22:[function(require,module,exports){
 module.exports = require("handlebars/runtime")["default"];
 
-},{"handlebars/runtime":16}],18:[function(require,module,exports){
+},{"handlebars/runtime":21}],23:[function(require,module,exports){
 /*!
  * jQuery JavaScript Library v1.10.2
  * http://jquery.com/
@@ -12061,7 +12165,7 @@ if ( typeof module === "object" && module && typeof module.exports === "object" 
 
 })( window );
 
-},{}],19:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 //     Underscore.js 1.6.0
 //     http://underscorejs.org
 //     (c) 2009-2014 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors

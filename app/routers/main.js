@@ -9,23 +9,22 @@ var Main = Backbone.Router.extend({
     'toc': 'showTOC',
     'examples': 'showExamples',
     'references': 'showReferences',
-    'chapters': 'showChapter',
+    'chapters/:id': 'showChapter',
     'about': 'showAbout'
   },
 
   showTOC: function() {
     this.navbar.addToc();
-    this.navbar.render();
   },
 
   showChapter: function(id) {
-
+    this.navbar.removeToc();
+    this.layout.showChapter(id);
   },
 
   showExamples: function() {
     this.navbar.removeToc();
-    this.navbar.render();
-    this.layout.render();
+    this.layout.showExamples();
   },
 
   showReferences: function() {
@@ -39,7 +38,7 @@ var Main = Backbone.Router.extend({
   initialize: function() {
     this.navbar = new Navbar({el: '#navbar'});
     this.navbar.render();
-    this.layout = new Layout({el: '#container'});
+    this.layout = new Layout({el: '#main'});
   }
 
 

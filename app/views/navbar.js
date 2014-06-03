@@ -19,7 +19,6 @@ var Navbar = Backbone.View.extend({
       that.removeToc();
     } else {
       that.addToc();
-      that.render();
     }
   },
 
@@ -34,6 +33,7 @@ var Navbar = Backbone.View.extend({
 
   addToc: function() {
     this.toc = new Toc();
+    this.render();
   },
 
   removeToc: function() {
@@ -42,6 +42,7 @@ var Navbar = Backbone.View.extend({
       that.toc.remove();
     }
     this.toc = null;
+    this.render();
   }
 
 });
