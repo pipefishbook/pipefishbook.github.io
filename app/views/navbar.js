@@ -5,6 +5,8 @@ var tocTemplate = require('templates/toc.hbs');
 
 var Toc = require('views/toc');
 
+var active = false;
+
 var Navbar = Backbone.View.extend({
 
   events: {
@@ -14,8 +16,10 @@ var Navbar = Backbone.View.extend({
   template: navbarTemplate,
 
   toggleToc: function(e) {
+    active = !active;
+
     var that = this;
-    if (this.toc) {
+    if (active) {
       that.removeToc();
     } else {
       that.addToc();
@@ -32,7 +36,7 @@ var Navbar = Backbone.View.extend({
   },
 
   addToc: function() {
-    this.toc = new Toc();
+    this.toc = new Toc({collection: this.collection});
     this.render();
   },
 
@@ -43,6 +47,11 @@ var Navbar = Backbone.View.extend({
     }
     this.toc = null;
     this.render();
+  },
+
+  initialize: function() {
+    this.listenTo(this.collection, 'add', this.render);
+
   }
 
 });

@@ -9,8 +9,12 @@ var Toc = Backbone.View.extend({
   className: 'toc',
 
   render: function() {
-    this.$el.html(this.template());
+    this.$el.html(this.template({chapters: this.collection.toJSON() }));
     return this;
+  },
+
+  initialize: function() {
+    this.listenTo(this.collection, 'add', this.render);
   }
 
 });

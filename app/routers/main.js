@@ -3,6 +3,12 @@ var Backbone = require('backbone');
 var Navbar = require('views/navbar');
 var Layout = require('views/layout');
 
+var Chapters = require('collections/chapters');
+var chapters = new Chapters();
+chapters.on('add', function(e) {
+  console.log(chapters.toJSON());
+});
+
 var Main = Backbone.Router.extend({
 
   routes: {
@@ -19,7 +25,7 @@ var Main = Backbone.Router.extend({
 
   showChapter: function(id) {
     this.navbar.removeToc();
-    this.layout.showChapter(id);
+    this.layout.trigger('change:selected', id);
   },
 
   showExamples: function() {
@@ -36,9 +42,9 @@ var Main = Backbone.Router.extend({
   },
 
   initialize: function() {
-    this.navbar = new Navbar({el: '#navbar'});
+    this.navbar = new Navbar({el: '#navbar', collection: chapters});
     this.navbar.render();
-    this.layout = new Layout({el: '#main'});
+    this.layout = new Layout({el: '#main', collection: chapters});
   }
 
 

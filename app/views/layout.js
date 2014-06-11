@@ -15,7 +15,7 @@ var Layout = Backbone.View.extend({
     if (this.view) {
       this.view.remove();
     }
-    this.view = new ChapterView({id: id});
+    this.view = new ChapterView({model: this.collection.get(id)});
     this.render();
   },
 
@@ -29,6 +29,7 @@ var Layout = Backbone.View.extend({
 
   initialize: function() {
     this.view = new WelcomeView();
+    this.on('change:selected', _.bind(this.showChapter, this));
   }
 
 });

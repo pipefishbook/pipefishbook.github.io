@@ -1,0 +1,88 @@
+[
+ {
+  "id": "1",
+  "title": "The Bigger Picture",
+  "goals": [
+   {
+    "name": "Getting Backbone.js via npm, via a content delivery network (CDN) or from the project site"
+   },
+   {
+    "name": "Basic bundling of JavaScript applications with Browserify and Stitch"
+   },
+   {
+    "name": "Explore the use cases of the CommonJS module format"
+   }
+  ]
+ },
+ {
+  "id": "2",
+  "title": "Kick Starting Application Development",
+  "goals": [
+   {
+    "name": "Exploring a UI concept with a wireframe"
+   },
+   {
+    "name": "The separation of data and user interface"
+   },
+   {
+    "name": "The basics of Backbone.Events"
+   },
+   {
+    "name": "Rendering a collection of movies"
+   },
+   {
+    "name": "View updates from events"
+   }
+  ]
+ },
+ {
+  "title": "Building the User Interface",
+  "id": 3,
+  "goals": []
+ },
+ {
+  "title": "Building the User Interface",
+  "id": 3,
+  "goals": []
+ },
+ {
+  "title": "Router Basics",
+  "id": 4,
+  "goals": []
+ },
+ {
+  "title": "Transforming Collections",
+  "id": 5,
+  "goals": []
+ },
+ {
+  "title": "Advanced View Templates",
+  "id": 6,
+  "goals": []
+ },
+ {
+  "id": 7,
+  "title": "Synchronizing State",
+  "goals": []
+ },
+ {
+  "id": 8,
+  "title": "Basic API Concerns",
+  "goals": []
+ },
+ {
+  "id": 9,
+  "title": "Authentication",
+  "goals": []
+ },
+ {
+  "id": 10,
+  "title": "Automated Workflows",
+  "goals": []
+ },
+ {
+  "id": 11,
+  "title": "From Backbone To Thorax",
+  "goals": []
+ }
+]

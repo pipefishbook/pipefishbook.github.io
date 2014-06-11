@@ -7,12 +7,17 @@ var Chapter = Backbone.View.extend({
   template: chapterTemplate,
 
   render: function() {
-    this.$el.html(this.template({id: this.id}));
+    if (!this.model) {
+      return;
+    }
+    var template = this.template(this.model.toJSON());
+    this.$el.html(template);
     return this;
   },
 
   initialize: function(options) {
     this.id = options.id;
+    this.model = options.model;
   }
 
 });

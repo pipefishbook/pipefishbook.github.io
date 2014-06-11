@@ -1,19 +1,11 @@
 
 <h1>Table of Contents</h1>
 
+
 <div class="toc-inner">
   <ul>
-    <li><a href="#chapters/1">The Bigger Picture</a></li>
-    <li><a href="#chapters/2">Kick-Starting Application Development</a></li>
-    <li><a href="#chapters/3">Building the User Interface</a></li>
-    <li><a href="#chapters/4">Router Basics</a></li>
-    <li><a href="#chapters/5">Transforming Collections</a></li>
-    <li><a href="#chapters/6">Advanced View Templates</a></li>
-    <li><a href="#chapters/7">Synchronizing State</a></li>
-    <li><a href="#chapters/8">Basic API Concerns</a></li>
-    <li><a href="#chapters/9">Authentication</a></li>
-    <li><a href="#chapters/10">Automated Workflows</a></li>
-    <li><a href="#chapters/11">From Backbone To Thorax</a></li>
-    <li><a href="#chapters/A">Appendix</li>
+  {{#each chapters}}
+    <li><a href="#chapters/{{ id}}">{{title}}</a></li>
+  {{/each}}
   </ul>
 </div>

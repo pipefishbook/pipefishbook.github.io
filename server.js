@@ -9,12 +9,12 @@ app.use(logger({ immediate: true, format: 'dev' }));
 
 app.use(express.static(__dirname + '/static'));
 
-var canned = require('canned'),
-    http = require('http'),
-    opts = { cors: true, logger: process.stdout }
-
-can = canned('.', opts);
-app.use(can);
+// var canned = require('canned'),
+//     http = require('http'),
+//     opts = { cors: true, logger: process.stdout }
+// 
+// can = canned('.', opts);
+// app.use(can);
 
 
 var port = 5000;
