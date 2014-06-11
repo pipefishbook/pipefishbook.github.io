@@ -5,9 +5,6 @@ var Layout = require('views/layout');
 
 var Chapters = require('collections/chapters');
 var chapters = new Chapters();
-chapters.on('add', function(e) {
-  console.log(chapters.toJSON());
-});
 
 var Main = Backbone.Router.extend({
 
@@ -34,7 +31,8 @@ var Main = Backbone.Router.extend({
   },
 
   showReferences: function() {
-
+    this.navbar.removeToc();
+    this.layout.showReferences();
   },
 
   showAbout: function() {

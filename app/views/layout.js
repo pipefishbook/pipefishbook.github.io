@@ -3,6 +3,7 @@ var Backbone = require('backbone');
 var WelcomeView = require('views/welcome');
 var ChapterView = require('views/chapter');
 var ExamplesView = require('views/examples');
+var ReferencesView = require('views/references');
 
 var Layout = Backbone.View.extend({
 
@@ -16,6 +17,14 @@ var Layout = Backbone.View.extend({
       this.view.remove();
     }
     this.view = new ChapterView({model: this.collection.get(id)});
+    this.render();
+  },
+
+  showReferences: function() {
+    if (this.view) {
+      this.view.remove();
+    }
+    this.view = new ReferencesView();
     this.render();
   },
 
