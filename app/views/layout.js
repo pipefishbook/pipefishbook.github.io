@@ -1,4 +1,5 @@
 var Backbone = require('backbone');
+var _ = require('underscore');
 
 var WelcomeView = require('views/welcome');
 var ChapterView = require('views/chapter');

@@ -1,6 +1,6 @@
 [
  {
-  "id": "1",
+  "id": 1,
   "title": "The Bigger Picture",
   "goals": [
    {
@@ -15,7 +15,7 @@
   ]
  },
  {
-  "id": "2",
+  "id": 2,
   "title": "Kick Starting Application Development",
   "goals": [
    {
@@ -38,51 +38,86 @@
  {
   "title": "Building the User Interface",
   "id": 3,
-  "goals": []
- },
- {
-  "title": "Building the User Interface",
-  "id": 3,
-  "goals": []
+  "goals": [
+    {"name": "The basic API of Backbone.View on building DOM nodes"},
+    {"name": "A basic idea on view templates"},
+    {"name": "Capturing events from a view"},
+    {"name": "Binding a collection view to the movies collection"} 
+  ]
  },
  {
   "title": "Router Basics",
   "id": 4,
-  "goals": []
+  "goals": [
+    {"name": "Using a router for navigating between states"},
+    {"name": "Sharing a layout across routes"},
+    {"name": "Rendering child views"}
+  ]
  },
  {
   "title": "Transforming Collections",
   "id": 5,
-  "goals": []
+  "goals": [
+    {"name": "Sorting a collection"},
+    {"name": "Filtering a collection"},
+    {"name": "Using Backbone.Obscura to wrap sorting, filtering, and paginating"}
+  ]
  },
  {
   "title": "Advanced View Templates",
   "id": 6,
-  "goals": []
+  "goals": [
+    {"name": "ECO view templates"},
+    {"name": "JST view templates"},
+    {"name": "Grunt, including how to set up a build process"}
+  ]
  },
  {
   "id": 7,
   "title": "Synchronizing State",
-  "goals": []
+  "goals": [
+    {"name": "Setting up a mock of a RESTful API"},
+    {"name": "Enabling fetching of remote data from an API"},
+    {"name": "Dealing with time effects around fetching"},
+    {"name": "Understanding the basics of hosted API services"}
+  ]
  },
  {
   "id": 8,
   "title": "Basic API Concerns",
-  "goals": []
+  "goals": [
+    {"name": "Building a RESTful API with Restify for voting on movies"},
+    {"name": "Using a Proxy middleware to connect a separate API process"},
+    {"name": "Data sources"}
+  ]
  },
  {
   "id": 9,
   "title": "Authentication",
-  "goals": []
+  "goals": [
+    {"name": "Security of Backbone applications"},
+    {"name": "Principles of client-server authentication"},
+    {"name": "Managing sessions"},
+    {"name": "Modal dialogs for signup and login"}
+  ]
  },
  {
   "id": 10,
   "title": "Automated Workflows",
-  "goals": []
+  "goals": [
+    {"name": "How to fetch Backbone dependencies such as plug-ins using Bower"},
+    {"name": "Yeoman and a Backbone generator, which will help scaffolding project structures"},
+    {"name": "Using RequireJS for development"},
+    {"name": "Using a build with RequireJS project"}
+  ]
  },
  {
   "id": 11,
   "title": "From Backbone To Thorax",
-  "goals": []
- }
+  "goals": [
+    {"name": "Productivity and scalability of an application"},
+    {"name": "Using Thorax for better view rendering"},
+    {"name": "Advanced interactions to select a movie"}
+  ]
+  }
 ]
