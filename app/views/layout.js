@@ -21,11 +21,11 @@ var Layout = Backbone.View.extend({
     this.render();
   },
 
-  showReferences: function() {
+  showReferences: function(options) {
     if (this.view) {
       this.view.remove();
     }
-    this.view = new ReferencesView();
+    this.view = new ReferencesView(options);
     this.render();
   },
 

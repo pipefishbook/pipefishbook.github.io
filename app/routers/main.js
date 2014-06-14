@@ -6,6 +6,9 @@ var Layout = require('views/layout');
 var Chapters = require('collections/chapters');
 var chapters = new Chapters();
 
+var References = require('collections/references');
+var references = new References();
+
 var Main = Backbone.Router.extend({
 
   routes: {
@@ -32,7 +35,7 @@ var Main = Backbone.Router.extend({
 
   showReferences: function() {
     this.navbar.removeToc();
-    this.layout.showReferences();
+    this.layout.showReferences({collection: references});
   },
 
   showAbout: function() {

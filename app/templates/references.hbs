@@ -1,42 +1,12 @@
-    <h2 id="downloads">
-      Libraries: 
-    </h2>
+<h2 id="downloads">
+Resources
+</h2>
 
-    <h3>Browser MVC</h3>
-    <ul>
-        <li><a href="http://backbonejs.org">Backbone.js</a></li>
-        <li><a href="http://underscorejs.org">Underscore.js</a></li>
-    </ul>
-
-
-    <h3>Managing Assets and Modules</h3>
-      <ul>
-        <li><a href="https://github.com/substack/node-browserify">Browserify</a></li>
-        <li><a href="https://github.com/requirejs">RequireJS</a></li>
-        <li><a href="https://github.com/sstephenson/stitch">Stitch</a></li>
-        <li><a href="https://github.com/clarkdave/connect-mincer">Mincer-connect</a></li>
-        <li><a href="http://bower.io/">Bower</a></li>
-      </ul>
-
-    <h3>Backbone Plugins</h3>
-      <ul>
-        <li><a href="https://github.com/jmorrell/backbone.obscura">Backbone.Obscura</a></li>
-        <li><a href="https://github.com/rotundasoftware/backbone.collectionView">CollectionView</a></li>
-      </ul>
-
-    <h3>Productivity</h3>
-      <ul>
-        <li><a href="http://gruntjs.com/">Grunt</a></li>
-        <li><a href="https://github.com/yeoman">Yeoman</a></li>
-      </ul>
-
-     <h3>Templates</h3>
-      <ul>
-      <li><a href="https://github.com/sstephenson/eco">ECO</a></li>
-      <li><a href="https://handlebarsjs.com">Handlebars</a></li>
-      </ul>
-      
-      <h3>Frameworks</h3>
-      <ul>
-        <li><a href="http://thoraxjs.org/">Thorax</a></li>
-      </ul>
+{{#each references}}
+  <h3>{{title}}</h3>
+  <ul>
+    {{#each links}}
+      <li><a href="{{url}}">{{name}}</a></li>
+    {{/each}}
+  </ul>
+{{/each}}
