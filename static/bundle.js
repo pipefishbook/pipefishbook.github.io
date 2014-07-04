@@ -1,7 +1,6 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 var $ = require('jquery-untouched');
-var backfire = require("client-backfire");
-var Backbone = backfire.Backbone;
+var Backbone = require('backbone');
 Backbone.$ = $;
 
 
@@ -12,9 +11,541 @@ $(document).ready(function() {
 });
 
 
-},{"client-backfire":20,"jquery-untouched":30,"routers/main":4}],2:[function(require,module,exports){
-var backfire = require("client-backfire");
-var Backbone = backfire.Backbone;
+},{"backbone":19,"jquery-untouched":29,"routers/main":5}],2:[function(require,module,exports){
+/**
+ * Backbone Firebase Adapter.
+ */
+(function (win, factory) {
+  if (typeof module === 'object' && typeof exports === 'object' && exports === module.exports) {
+    module.exports = factory(require('underscore'), require('backbone'), require('client-firebase'));
+  }
+  else if (typeof define === 'function' && define.amd) {
+    define(['underscore', 'backbone', 'firebase'], factory);
+  }
+  else {
+    win.Backbone.Firebase = factory(win._, win.Backbone, win.Firebase);
+  }
+}(this, function(_, Backbone, Firebase) {
+  "use strict";
+
+  var BackboneFirebase = function(ref) {
+    this._fbref = ref;
+    this._children = [];
+    if (typeof ref == "string") {
+      this._fbref = new Firebase(ref);
+    }
+
+    this._fbref.on("child_added", this._childAdded, this);
+    this._fbref.on("child_moved", this._childMoved, this);
+    this._fbref.on("child_changed", this._childChanged, this);
+    this._fbref.on("child_removed", this._childRemoved, this);
+  };
+
+  _.extend(BackboneFirebase.prototype, {
+    _childAdded: function(childSnap, prevChild) {
+      var model = childSnap.val();
+      model.id = childSnap.name();
+      if (prevChild) {
+        var item = _.find(this._children, function(child) {
+          return child.id == prevChild;
+        });
+        this._children.splice(this._children.indexOf(item) + 1, 0, model);
+      } else {
+        this._children.unshift(model);
+      }
+    },
+
+    _childMoved: function(childSnap, prevChild) {
+      var model = childSnap.val();
+      this._children = _.reject(this._children, function(child) {
+        return child.id == model.id;
+      });
+      this._childAdded(childSnap, prevChild);
+    },
+
+    _childChanged: function(childSnap) {
+      var model = childSnap.val();
+      model.id = childSnap.name();
+      var item = _.find(this._children, function(child) {
+        return child.id == model.id;
+      });
+      this._children[this._children.indexOf(item)] = model;
+    },
+
+    _childRemoved: function(oldChildSnap) {
+      var model = oldChildSnap.val();
+      this._children = _.reject(this._children, function(child) {
+        return child.id == model.id;
+      });
+    },
+
+    create: function(model, cb) {
+      if (!model.id) {
+        model.id = this._fbref.ref().push().name();
+      }
+
+      var val = model.toJSON();
+      this._fbref.ref().child(model.id).set(val, _.bind(function(err) {
+        if (!err) {
+          cb(null, val);
+        } else {
+          cb("Could not create model " + model.id);
+        }
+      }, this));
+    },
+
+    read: function(model, cb) {
+      if (!model.id) {
+        _.defer(cb, "Invalid model ID provided to read");
+        return;
+      }
+
+      var index = _.find(this._children, function(child) {
+        return child.id == model.id;
+      });
+
+      _.defer(cb, null, this._children[index]);
+    },
+
+    readAll: function(model, cb) {
+      _.defer(cb, null, this._children);
+    },
+
+    update: function(model, cb) {
+      var val = model.toJSON();
+      this._fbref.ref().child(model.id).update(val, function(err) {
+        if (!err) {
+          cb(null, val);
+        } else {
+          cb("Could not update model " + model.id, null);
+        }
+      });
+    },
+
+    "delete": function(model, cb) {
+      this._fbref.ref().child(model.id).remove(function(err) {
+        if (!err) {
+          cb(null, model);
+        } else {
+          cb("Could not delete model " + model.id);
+        }
+      });
+    },
+
+    ref: function() {
+      return this._fbref;
+    }
+  });
+
+
+  BackboneFirebase.sync = function(method, model, options, error) {
+    var store = model.firebase || model.collection.firebase;
+
+    // Backwards compatibility with Backbone <= 0.3.3
+    if (typeof options == "function") {
+      options = {
+        success: options,
+        error: error
+      };
+    }
+
+    if (method == "read" && model.id === undefined) {
+      method = "readAll";
+    }
+
+    store[method].apply(store, [model, function(err, val) {
+      if (err) {
+        model.trigger("error", model, err, options);
+        if (Backbone.VERSION === "0.9.10") {
+          options.error(model, err, options);
+        } else {
+          options.error(err);
+        }
+      } else {
+        model.trigger("sync", model, val, options);
+        if (Backbone.VERSION === "0.9.10") {
+          options.success(model, val, options);
+        } else {
+          options.success(val);
+        }
+      }
+    }]);
+  };
+
+  Backbone.oldSync = Backbone.sync;
+
+  // Override "Backbone.sync" to default to Firebase sync.
+  // the original "Backbone.sync" is still available in "Backbone.oldSync"
+  Backbone.sync = function(method, model, options, error) {
+    var syncMethod = Backbone.oldSync;
+    if (model.firebase || (model.collection && model.collection.firebase)) {
+      syncMethod = BackboneFirebase.sync;
+    }
+    return syncMethod.apply(this, [method, model, options, error]);
+  };
+
+  // Custom Firebase Collection.
+  BackboneFirebase.Collection = Backbone.Collection.extend({
+    sync: function() {
+      this._log("Sync called on a Firebase collection, ignoring.");
+    },
+
+    fetch: function() {
+      this._log("Fetch called on a Firebase collection, ignoring.");
+    },
+
+    constructor: function(models, options) {
+      // Apply parent constructor (this will also call initialize).
+      Backbone.Collection.apply(this, arguments);
+
+      if (options && options.firebase) {
+        this.firebase = options.firebase;
+      }
+      switch (typeof this.firebase) {
+      case "object":
+        break;
+      case "string":
+        this.firebase = new Firebase(this.firebase);
+        break;
+      case "function":
+        this.firebase = this.firebase();
+        break;
+      default:
+        throw new Error("Invalid firebase reference created");
+      }
+
+      // Add handlers for remote events.
+      this.firebase.on("child_added", _.bind(this._childAdded, this));
+      this.firebase.on("child_moved", _.bind(this._childMoved, this));
+      this.firebase.on("child_changed", _.bind(this._childChanged, this));
+      this.firebase.on("child_removed", _.bind(this._childRemoved, this));
+
+      // Once handler to emit "sync" event.
+      this.firebase.once("value", _.bind(function() {
+        this.trigger("sync", this, null, null);
+      }, this));
+
+      // Handle changes in any local models.
+      this.listenTo(this, "change", this._updateModel, this);
+      // Listen for destroy event to remove models.
+      this.listenTo(this, "destroy", this._removeModel, this);
+
+      // Don't suppress local events by default.
+      this._suppressEvent = false;
+    },
+
+    comparator: function(model) {
+      return model.id;
+    },
+
+    add: function(models, options) {
+      var parsed = this._parseModels(models);
+      options = options ? _.clone(options) : {};
+      options.success =
+        _.isFunction(options.success) ? options.success : function() {};
+
+      for (var i = 0; i < parsed.length; i++) {
+        var model = parsed[i];
+        var childRef = this.firebase.ref().child(model.id);
+        if (options.silent === true) {
+          this._suppressEvent = true;
+        }
+        childRef.set(model, _.bind(options.success, model));
+      }
+
+      return parsed;
+    },
+
+    remove: function(models, options) {
+      var parsed = this._parseModels(models);
+      options = options ? _.clone(options) : {};
+      options.success =
+        _.isFunction(options.success) ? options.success : function() {};
+
+      for (var i = 0; i < parsed.length; i++) {
+        var model = parsed[i];
+        var childRef = this.firebase.ref().child(model.id);
+        if (options.silent === true) {
+          this._suppressEvent = true;
+        }
+        childRef.set(null, _.bind(options.success, model));
+      }
+
+      return parsed;
+    },
+
+    create: function(model, options) {
+      options = options ? _.clone(options) : {};
+      if (options.wait) {
+        this._log("Wait option provided to create, ignoring.");
+      }
+      model = Backbone.Collection.prototype._prepareModel.apply(
+        this, [model, options]
+      );
+      if (!model) {
+        return false;
+      }
+      var set = this.add([model], options);
+      return set[0];
+    },
+
+    reset: function(models, options) {
+      options = options ? _.clone(options) : {};
+      // Remove all models remotely.
+      this.remove(this.models, {silent: true});
+      // Add new models.
+      var ret = this.add(models, {silent: true});
+      // Trigger "reset" event.
+      if (!options.silent) {
+        this.trigger("reset", this, options);
+      }
+      return ret;
+    },
+
+    _log: function(msg) {
+      if (console && console.log) {
+        console.log(msg);
+      }
+    },
+
+    // TODO: Options will be ignored for add & remove, document this!
+    _parseModels: function(models) {
+      var ret = [];
+      models = _.isArray(models) ? models.slice() : [models];
+      for (var i = 0; i < models.length; i++) {
+        var model = models[i];
+        if (model.toJSON && typeof model.toJSON == "function") {
+          model = model.toJSON();
+        }
+        if (!model.id) {
+          model.id = this.firebase.ref().push().name();
+        }
+        ret.push(model);
+      }
+      return ret;
+    },
+
+    _childAdded: function(snap) {
+      var model = snap.val();
+      if (!model.id) {
+        if (!_.isObject(model)) {
+          model = {};
+        }
+        model.id = snap.name();
+      }
+      if (this._suppressEvent === true) {
+        this._suppressEvent = false;
+        Backbone.Collection.prototype.add.apply(this, [model], {silent: true});
+      } else {
+        Backbone.Collection.prototype.add.apply(this, [model]);
+      }
+      this.get(model.id)._remoteAttributes = model;
+    },
+
+    _childMoved: function(snap) {
+      // TODO: Investigate: can this occur without the ID changing?
+      this._log("_childMoved called with " + snap.val());
+    },
+
+    _childChanged: function(snap) {
+      var model = snap.val();
+      if (!model.id) {
+        model.id = snap.name();
+      }
+
+      var item = _.find(this.models, function(child) {
+        return child.id == model.id;
+      });
+
+      if (!item) {
+        // TODO: Investigate: what is the right way to handle this case?
+        throw new Error("Could not find model with ID " + model.id);
+      }
+
+      this._preventSync(item, true);
+      item._remoteAttributes = model;
+
+      var diff = _.difference(_.keys(item.attributes), _.keys(model));
+      _.each(diff, function(key) {
+        item.unset(key);
+      });
+
+      item.set(model);
+      this._preventSync(item, false);
+    },
+
+    _childRemoved: function(snap) {
+      var model = snap.val();
+      if (!model.id) {
+        model.id = snap.name();
+      }
+      if (this._suppressEvent === true) {
+        this._suppressEvent = false;
+        Backbone.Collection.prototype.remove.apply(
+          this, [model], {silent: true}
+        );
+      } else {
+        Backbone.Collection.prototype.remove.apply(this, [model]);
+      }
+    },
+
+    // Add handlers for all models in this collection, and any future ones
+    // that may be added.
+    _updateModel: function(model) {
+      if (model._remoteChanging) {
+        return;
+      }
+
+      var remoteAttributes = model._remoteAttributes || {};
+      var localAttributes = model.toJSON();
+      var updateAttributes = {};
+
+      var union = _.union(_.keys(remoteAttributes), _.keys(localAttributes));
+      _.each(union, function(key) {
+        if (!_.has(localAttributes, key)) {
+          updateAttributes[key] = null;
+        } else if (localAttributes[key] != remoteAttributes[key]) {
+          updateAttributes[key] = localAttributes[key];
+        }
+      });
+
+      if (_.size(updateAttributes)) {
+        // Special case if ".priority" was updated - a merge is not
+        // allowed so we'll have to do a full setWithPriority.
+        if (_.has(updateAttributes, ".priority")) {
+          var ref = this.firebase.ref().child(model.id);
+          var priority = localAttributes[".priority"];
+          delete localAttributes[".priority"];
+          ref.setWithPriority(localAttributes, priority);
+        } else {
+          this.firebase.ref().child(model.id).update(updateAttributes);
+        }
+      }
+    },
+
+    // Triggered when model.destroy() is called on one of the children.
+    _removeModel: function(model, collection, options) {
+      options = options ? _.clone(options) : {};
+      options.success =
+        _.isFunction(options.success) ? options.success : function() {};
+      var childRef = this.firebase.ref().child(model.id);
+      childRef.set(null, _.bind(options.success, model));
+    },
+
+    _preventSync: function(model, state) {
+      model._remoteChanging = state;
+    }
+  });
+
+  // Custom Firebase Model.
+  BackboneFirebase.Model = Backbone.Model.extend({
+    save: function() {
+      this._log("Save called on a Firebase model, ignoring.");
+    },
+
+    destroy: function(options) {
+      // TODO: Fix naive success callback. Add error callback.
+      this.firebase.ref().set(null, this._log);
+      this.trigger("destroy", this, this.collection, options);
+      if (options.success) {
+        options.success(this, null, options);
+      }
+    },
+
+    constructor: function(model, options) {
+      // Store defaults so they don't get applied immediately.
+      var defaults = _.result(this, "defaults");
+
+      // Apply defaults only after first sync.
+      this.once("sync", function() {
+        this.set(_.defaults(this.toJSON(), defaults));
+      });
+
+      // Apply parent constructor (this will also call initialize).
+      Backbone.Model.apply(this, arguments);
+
+      if (options && options.firebase) {
+        this.firebase = options.firebase;
+      }
+      switch (typeof this.firebase) {
+      case "object":
+        break;
+      case "string":
+        this.firebase = new Firebase(this.firebase);
+        break;
+      case "function":
+        this.firebase = this.firebase();
+        break;
+      default:
+        throw new Error("Invalid firebase reference created");
+      }
+
+      // Add handlers for remote events.
+      this.firebase.on("value", _.bind(this._modelChanged, this));
+
+      this._listenLocalChange(true);
+    },
+
+    _listenLocalChange: function(state) {
+      if (state) {
+        this.on("change", this._updateModel, this);
+      } else {
+        this.off("change", this._updateModel, this);
+      }
+    },
+
+    _updateModel: function(model) {
+      // Find the deleted keys and set their values to null
+      // so Firebase properly deletes them.
+      var modelObj = model.changedAttributes();
+      _.each(model.changed, function(value, key) {
+        if (typeof value === "undefined" || value === null) {
+          if (key == "id") {
+            delete modelObj[key];
+          } else {
+            modelObj[key] = null;
+          }
+        }
+      });
+      if (_.size(modelObj)) {
+        this.firebase.ref().update(modelObj, this._log);
+      }
+    },
+
+    _modelChanged: function(snap) {
+      // Unset attributes that have been deleted from the server
+      // by comparing the keys that have been removed.
+      var newModel = snap.val();
+      if (typeof newModel === "object" && newModel !== null) {
+        var diff = _.difference(_.keys(this.attributes), _.keys(newModel));
+        var self = this;
+        _.each(diff, function(key) {
+          self.unset(key);
+        });
+      }
+      this._listenLocalChange(false);
+      this.set(newModel);
+      this._listenLocalChange(true);
+      this.trigger("sync", this, null, null);
+    },
+
+    _log: function(msg) {
+      if (typeof msg === "undefined" || msg === null) {
+        return;
+      }
+      if (console && console.log) {
+        console.log(msg);
+      }
+    }
+
+  });
+
+  return BackboneFirebase;
+}));
+
+},{"backbone":19,"client-firebase":20,"underscore":30}],3:[function(require,module,exports){
+var Backbone = require('backbone');
+Backbone.Firebase = require('./backbone_firebase');
 
 var Chapter = Backbone.Model.extend({
 
@@ -32,9 +563,9 @@ var Chapters = Backbone.Firebase.Collection.extend({
 });
 module.exports = Chapters;
 
-},{"client-backfire":20}],3:[function(require,module,exports){
-var backfire = require("client-backfire");
-var Backbone = backfire.Backbone;
+},{"./backbone_firebase":2,"backbone":19}],4:[function(require,module,exports){
+var Backbone = require('backbone');
+Backbone.Firebase = require('./backbone_firebase');
 
 var Reference = Backbone.Model.extend({
 
@@ -52,7 +583,7 @@ var References = Backbone.Firebase.Collection.extend({
 });
 module.exports = References;
 
-},{"client-backfire":20}],4:[function(require,module,exports){
+},{"./backbone_firebase":2,"backbone":19}],5:[function(require,module,exports){
 var Backbone = require('backbone');
 
 var Navbar = require('views/navbar');
@@ -107,7 +638,7 @@ var Main = Backbone.Router.extend({
 });
 module.exports = Main;
 
-},{"backbone":18,"collections/chapters":2,"collections/references":3,"views/layout":13,"views/navbar":14}],5:[function(require,module,exports){
+},{"backbone":19,"collections/chapters":3,"collections/references":4,"views/layout":14,"views/navbar":15}],6:[function(require,module,exports){
 // hbsfy compiled Handlebars template
 var Handlebars = require('hbsfy/runtime');
 module.exports = Handlebars.template(function (Handlebars,depth0,helpers,partials,data) {
@@ -141,7 +672,7 @@ function program1(depth0,data) {
   return buffer;
   });
 
-},{"hbsfy/runtime":29}],6:[function(require,module,exports){
+},{"hbsfy/runtime":28}],7:[function(require,module,exports){
 // hbsfy compiled Handlebars template
 var Handlebars = require('hbsfy/runtime');
 module.exports = Handlebars.template(function (Handlebars,depth0,helpers,partials,data) {
@@ -150,10 +681,10 @@ helpers = this.merge(helpers, Handlebars.helpers); data = data || {};
   
 
 
-  return "<h1>Examples</h1>\n\n<ul>\n  <li>Chapter 1</h1>\n  <ul>\n    <li><a href=\"https://github.com/pipefishbook/ch_1\">Basic setup of an application stack</a></li>\n  </ul>\n  <li>Chapter 2</h1>\n\n  <ul>\n    <li><a href=\"https://github.com/pipefishbook/ch_2/tree/master/start\">Empty Application</a></li>\n    <li><a href=\"https://github.com/pipefishbook/ch_2/tree/master/browserify\">Browserify</a></li>\n  </ul>\n  <li>Chapter 3</h1>\n  <li>Chapter 4: <a href=\"/ch_4\">Examples of routes and layout</a> (<a href=\"https://github.com/pipefishbook/ch_4\"> source </a>) </li>\n</ul>\n";
+  return "<h1>Examples</h1>\n\n<ul>\n  <li>Chapter 1</h1>\n  <ul>\n    <li><a href=\"https://github.com/pipefishbook/ch_1\">Basic setup of an application stack</a></li>\n  </ul>\n  <li>Chapter 2</h1>\n\n  <ul>\n    <li><a href=\"https://github.com/pipefishbook/ch_2/tree/master/start\">Empty Application</a></li>\n    <li><a href=\"https://github.com/pipefishbook/ch_2/tree/master/browserify\">Browserify</a></li>\n  </ul>\n  <li>Chapter 3: Examples of Backbone views</li>\n  <li>Chapter 4: <a href=\"/ch_4\">Examples of routes and layout</a> (<a href=\"https://github.com/pipefishbook/ch_4\"> source </a>) </li>\n  <li>Chapter 5: Examples of Sorting and Filtering a collection</li>\n  <li>Chapter 6: Advanced Templates and Grunt</li>\n  <li>Chapter 7: Examples of Remote data (Canned APIs, Firebase)</li>\n  <li>Chapter 8: More API requirements</li>\n  <li>Chapter 9: Basic Authentication</li>\n</ul>\n";
   });
 
-},{"hbsfy/runtime":29}],7:[function(require,module,exports){
+},{"hbsfy/runtime":28}],8:[function(require,module,exports){
 // hbsfy compiled Handlebars template
 var Handlebars = require('hbsfy/runtime');
 module.exports = Handlebars.template(function (Handlebars,depth0,helpers,partials,data) {
@@ -165,7 +696,7 @@ helpers = this.merge(helpers, Handlebars.helpers); data = data || {};
   return "<ul>\n  <li><a href=\"#toc\">The Book</a></li>\n  <li><a href=\"#examples\">Examples</a></li>\n  <li><a href=\"http://backbone-like.herokuapp.com\">Munich Cinema (demo)</a></li>\n  <li><a href=\"#references\">Further References</a></li>\n  <li><a href=\"#about\">About</a></li>\n</ul>\n";
   });
 
-},{"hbsfy/runtime":29}],8:[function(require,module,exports){
+},{"hbsfy/runtime":28}],9:[function(require,module,exports){
 // hbsfy compiled Handlebars template
 var Handlebars = require('hbsfy/runtime');
 module.exports = Handlebars.template(function (Handlebars,depth0,helpers,partials,data) {
@@ -208,7 +739,7 @@ function program2(depth0,data) {
   return buffer;
   });
 
-},{"hbsfy/runtime":29}],9:[function(require,module,exports){
+},{"hbsfy/runtime":28}],10:[function(require,module,exports){
 // hbsfy compiled Handlebars template
 var Handlebars = require('hbsfy/runtime');
 module.exports = Handlebars.template(function (Handlebars,depth0,helpers,partials,data) {
@@ -238,7 +769,7 @@ function program1(depth0,data) {
   return buffer;
   });
 
-},{"hbsfy/runtime":29}],10:[function(require,module,exports){
+},{"hbsfy/runtime":28}],11:[function(require,module,exports){
 // hbsfy compiled Handlebars template
 var Handlebars = require('hbsfy/runtime');
 module.exports = Handlebars.template(function (Handlebars,depth0,helpers,partials,data) {
@@ -250,7 +781,7 @@ helpers = this.merge(helpers, Handlebars.helpers); data = data || {};
   return "hello world\n";
   });
 
-},{"hbsfy/runtime":29}],11:[function(require,module,exports){
+},{"hbsfy/runtime":28}],12:[function(require,module,exports){
 var Backbone = require('backbone');
 
 var chapterTemplate = require('templates/chapter.hbs');
@@ -276,7 +807,7 @@ var Chapter = Backbone.View.extend({
 });
 module.exports = Chapter;
 
-},{"backbone":18,"templates/chapter.hbs":5}],12:[function(require,module,exports){
+},{"backbone":19,"templates/chapter.hbs":6}],13:[function(require,module,exports){
 var Backbone = require('backbone');
 
 var examplesTemplate = require('templates/examples.hbs');
@@ -293,7 +824,7 @@ var Examples = Backbone.View.extend({
 });
 module.exports = Examples;
 
-},{"backbone":18,"templates/examples.hbs":6}],13:[function(require,module,exports){
+},{"backbone":19,"templates/examples.hbs":7}],14:[function(require,module,exports){
 var Backbone = require('backbone');
 var _ = require('underscore');
 
@@ -341,7 +872,7 @@ var Layout = Backbone.View.extend({
 });
 module.exports = Layout;
 
-},{"backbone":18,"underscore":31,"views/chapter":11,"views/examples":12,"views/references":15,"views/welcome":17}],14:[function(require,module,exports){
+},{"backbone":19,"underscore":30,"views/chapter":12,"views/examples":13,"views/references":16,"views/welcome":18}],15:[function(require,module,exports){
 var Backbone = require('backbone');
 
 var navbarTemplate = require('templates/navbar.hbs');
@@ -400,7 +931,7 @@ var Navbar = Backbone.View.extend({
 });
 module.exports = Navbar;
 
-},{"backbone":18,"templates/navbar.hbs":7,"templates/toc.hbs":9,"views/toc":16}],15:[function(require,module,exports){
+},{"backbone":19,"templates/navbar.hbs":8,"templates/toc.hbs":10,"views/toc":17}],16:[function(require,module,exports){
 var Backbone = require('backbone');
 
 var referencesTemplate = require('templates/references.hbs');
@@ -421,7 +952,7 @@ var References = Backbone.View.extend({
 });
 module.exports = References;
 
-},{"backbone":18,"templates/references.hbs":8}],16:[function(require,module,exports){
+},{"backbone":19,"templates/references.hbs":9}],17:[function(require,module,exports){
 var Backbone = require('backbone');
 
 var tocTemplate = require('templates/toc.hbs');
@@ -444,7 +975,7 @@ var Toc = Backbone.View.extend({
 });
 module.exports = Toc;
 
-},{"backbone":18,"templates/toc.hbs":9}],17:[function(require,module,exports){
+},{"backbone":19,"templates/toc.hbs":10}],18:[function(require,module,exports){
 var Backbone = require('backbone');
 
 var welcomeTemplate = require('templates/welcome.hbs');
@@ -461,7 +992,7 @@ var Welcome = Backbone.View.extend({
 });
 module.exports = Welcome;
 
-},{"backbone":18,"templates/welcome.hbs":10}],18:[function(require,module,exports){
+},{"backbone":19,"templates/welcome.hbs":11}],19:[function(require,module,exports){
 //     Backbone.js 1.1.2
 
 //     (c) 2010-2014 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
@@ -2071,408 +2602,7 @@ module.exports = Welcome;
 
 }));
 
-},{"underscore":31}],19:[function(require,module,exports){
-/**
- * Backbone Firebase Adapter.
- */
-
-(function() {
-
-var _        = require('underscore');
-var Backbone = require('backbone');
-var Firebase = require('client-firebase');
-
-Backbone.Firebase = function(ref) {
-  this._fbref = ref;
-  this._children = [];
-  if (typeof ref == "string") {
-    this._fbref = new Firebase(ref);
-  }
-
-  this._fbref.on("child_added", this._childAdded, this);
-  this._fbref.on("child_moved", this._childMoved, this);
-  this._fbref.on("child_changed", this._childChanged, this);
-  this._fbref.on("child_removed", this._childRemoved, this);
-};
-
-_.extend(Backbone.Firebase.prototype, {
-
-  _childAdded: function(childSnap, prevChild) {
-    var model = childSnap.val();
-    model.id = childSnap.name();
-    if (prevChild) {
-      var item = _.find(this._children, function(child) {
-        return child.id == prevChild
-      });
-      this._children.splice(this._children.indexOf(item) + 1, 0, model);
-    } else {
-      this._children.unshift(model);
-    }
-  },
-  _childMoved: function(childSnap, prevChild) {
-    var model = childSnap.val();
-    this._children = _.reject(this._children, function(child) {
-      return child.id == model.id;
-    });
-    this._childAdded(childSnap, prevChild);
-  },
-  _childChanged: function(childSnap, prevChild) {
-    var model = childSnap.val();
-    model.id = childSnap.name();
-    var item = _.find(this._children, function(child) {
-      return child.id == model.id
-    });
-    this._children[this._children.indexOf(item)] = model;
-  },
-  _childRemoved: function(oldChildSnap) {
-    var model = oldChildSnap.val();
-    this._children = _.reject(this._children, function(child) {
-      return child.id == model.id
-    });
-  },
-
-  create: function(model, cb) {
-    if (!model.id) {
-      model.id = this._fbref.ref().push().name();
-    }
-    var val = model.toJSON();
-    this._fbref.ref().child(model.id).set(val, _.bind(function(err) {
-      if (!err) {
-        cb(null, val);
-      } else {
-        cb("Could not create model " + model.id);
-      }
-    }, this));
-  },
-
-  read: function(model, cb) {
-    if (!model.id) {
-      _.defer(cb, "Invalid model ID provided to read");
-      return;
-    }
-    var index = _.find(this._children, function(child) {
-      return child.id == model.id
-    });
-    _.defer(cb, null, this._children[index]);
-  },
-
-  readAll: function(model, cb) {
-    _.defer(cb, null, this._children);
-  },
-
-  update: function(model, cb) {
-    var val = model.toJSON();
-    this._fbref.ref().child(model.id).update(val, function(err) {
-      if (!err) {
-        cb(null, val);
-      } else {
-        cb("Could not update model " + model.id, null);
-      }
-    });
-  },
-
-  'delete': function(model, cb) {
-    this._fbref.ref().child(model.id).remove(function(err) {
-      if (!err) {
-        cb(null, model);
-      } else {
-        cb("Could not delete model " + model.id);
-      }
-    });
-  }
-});
-
-
-Backbone.Firebase.sync = function(method, model, options, error) {
-  var store = model.firebase || model.collection.firebase;
-
-  // Backwards compatibility with Backbone <= 0.3.3
-  if (typeof options == 'function') {
-    options = {
-      success: options,
-      error: error
-    };
-  }
-
-  if (method == "read" && model.id == undefined) {
-    method = "readAll";
-  }
-
-  store[method].apply(store, [model, function(err, val) {
-    if (err) {
-      model.trigger("error", model, err, options);
-      if (Backbone.VERSION === "0.9.10") {
-        options.error(model, err, options);
-      } else {
-        options.error(err);
-      }
-    } else {
-      model.trigger("sync", model, val, options);
-      if (Backbone.VERSION === "0.9.10") {
-        options.success(model, val, options);
-      } else {
-        options.success(val);
-      }
-    }
-  }]);
-};
-
-Backbone.oldSync = Backbone.sync;
-
-// Override 'Backbone.sync' to default to Firebase sync.
-// the original 'Backbone.sync' is still available in 'Backbone.oldSync'
-Backbone.sync = function(method, model, options, error) {
-  var syncMethod = Backbone.oldSync;
-  if (model.firebase || (model.collection && model.collection.firebase)) {
-    syncMethod = Backbone.Firebase.sync;
-  }
-  return syncMethod.apply(this, [method, model, options, error]);
-};
-
-// Custom Firebase Collection.
-Backbone.Firebase.Collection = Backbone.Collection.extend({
-  sync: function() {
-    this._log("Sync called on a Firebase collection, ignoring.");
-  },
-
-  fetch: function() {
-    this._log("Fetch called on a Firebase collection, ignoring.");
-  },
-
-  constructor: function(models, options) {
-
-    // Apply parent constructor (this will also call initialize).
-    Backbone.Collection.apply(this, arguments);
-
-    if (options && options.firebase) {
-      this.firebase = options.firebase;
-    }
-    switch (typeof this.firebase) {
-      case "object": break;
-      case "string": this.firebase = new Firebase(this.firebase); break;
-      case "function": this.firebase = this.firebase(); break;
-      default: throw new Error("Invalid firebase reference created");
-    }
-
-    // Add handlers for remote events.
-    this.firebase.on("child_added", _.bind(this._childAdded, this));
-    this.firebase.on("child_moved", _.bind(this._childMoved, this));
-    this.firebase.on("child_changed", _.bind(this._childChanged, this));
-    this.firebase.on("child_removed", _.bind(this._childRemoved, this));
-
-    // Add handlers for all models in this collection, and any future ones
-    // that may be added.
-    function _updateModel(model, options) {
-      this.firebase.ref().child(model.id).update(model.toJSON());
-    }
-
-    this.listenTo(this, 'change', _updateModel, this);
-  },
-
-  comparator: function(model) {
-    return model.id;
-  },
-
-  add: function(models, options) {
-    var parsed = this._parseModels(models);
-    options = options ? _.clone(options) : {};
-    options.success = _.isFunction(options.success) ? options.success : function() {};
-
-    for (var i = 0; i < parsed.length; i++) {
-      var model = parsed[i];
-      this.firebase.ref().child(model.id).set(model, _.bind(options.success, model));
-    }
-  },
-
-  remove: function(models, options) {
-    var parsed = this._parseModels(models);
-    options = options ? _.clone(options) : {};
-    options.success = _.isFunction(options.success) ? options.success : function() {};
-
-    for (var i = 0; i < parsed.length; i++) {
-      var model = parsed[i];
-      this.firebase.ref().child(model.id).set(null, _.bind(options.success, model));
-    }
-  },
-
-  create: function(model, options) {
-    this._log("Create called, aliasing to add. Consider using Collection.add!");
-    options = options ? _.clone(options) : {};
-    if (options.wait) {
-      this._log("Wait option provided to create, ignoring.");
-    }
-    model = Backbone.Collection.prototype._prepareModel.apply(
-      this, [model, options]
-    );
-    if (!model) {
-      return false;
-    }
-    this.add([model], options);
-    return model;
-  },
-
-  _log: function(msg) {
-    if (console && console.log) {
-      console.log(msg);
-    }
-  },
-
-  // TODO: Options will be ignored for add & remove, document this!
-  _parseModels: function(models) {
-    var ret = [];
-    models = _.isArray(models) ? models.slice() : [models];
-    for (var i = 0; i < models.length; i++) {
-      var model = models[i];
-      if (model.toJSON && typeof model.toJSON == "function") {
-        model = model.toJSON();
-      }
-      if (!model.id) {
-        model.id = this.firebase.ref().push().name();
-      }
-      ret.push(model);
-    }
-    return ret;
-  },
-
-  _childAdded: function(snap) {
-    var model = snap.val()
-    if (!model.id) model.id = snap.name()
-    Backbone.Collection.prototype.add.apply(this, [model]);
-  },
-
-  _childMoved: function(snap) {
-    // TODO: Investigate: can this occur without the ID changing?
-    this._log("_childMoved called with " + snap.val());
-  },
-
-  _childChanged: function(snap) {
-    var model = snap.val();
-    if (!model.id) model.id = snap.name()
-    var item = _.find(this.models, function(child) {
-      return child.id == model.id
-    });
-    if (!item) {
-      // TODO: Investigate: what is the right way to handle this case?
-      throw new Error("Could not find model with ID " + model.id);
-    }
-
-    var diff = _.difference(_.keys(item.attributes), _.keys(model));
-    _.each(diff, function(key) {
-      item.unset(key);
-    });
-
-    item.set(model);
-  },
-
-  _childRemoved: function(snap) {
-    var model = snap.val()
-    if (!model.id) model.id = snap.name()
-    Backbone.Collection.prototype.remove.apply(this, [model]);
-  }
-});
-
-// Custom Firebase Model.
-Backbone.Firebase.Model = Backbone.Model.extend({
-  save: function() {
-    this._log("Save called on a Firebase model, ignoring.");
-  },
-
-  destroy: function(options) {
-    // TODO: Fix naive success callback. Add error callback.
-    this.firebase.ref().set(null, this._log);
-    this.trigger('destroy', this, this.collection, options);
-    if (options.success) {
-      options.success(this,null,options);
-    }
-  },
-
-  constructor: function(model, options) {
-
-    // Apply parent constructor (this will also call initialize).
-    Backbone.Model.apply(this, arguments);
-
-    if (options && options.firebase) {
-      this.firebase = options.firebase;
-    }
-    switch (typeof this.firebase) {
-      case "object": break;
-      case "string": this.firebase = new Firebase(this.firebase); break;
-      case "function": this.firebase = this.firebase(); break;
-      default: throw new Error("Invalid firebase reference created");
-    }
-
-    // Add handlers for remote events.
-    this.firebase.on("value", this._modelChanged.bind(this));
-
-    this._listenLocalChange(true);
-  },
-
-  _listenLocalChange: function(state) {
-    if (state)
-      this.on("change", this._updateModel, this);
-    else
-      this.off("change", this._updateModel, this);
-  },
-
-  _updateModel: function(model, options) {
-    // Find the deleted keys and set their values to null
-    // so Firebase properly deletes them.
-    var modelObj = model.toJSON();
-    _.each(model.changed, function(value, key) {
-      if (typeof value === "undefined" || value === null)
-        if (key == "id")
-          delete modelObj[key];
-        else
-          modelObj[key] = null;
-    });
-    if (_.size(modelObj))
-      this.firebase.ref().update(modelObj, this._log);
-  },
-
-  _modelChanged: function(snap) {
-    // Unset attributes that have been deleted from the server
-    // by comparing the keys that have been removed.
-    var newModel = snap.val();
-    if (typeof newModel === "object" && newModel !== null) {
-      var diff = _.difference(_.keys(this.attributes), _.keys(newModel));
-      var _this = this;
-      _.each(diff, function(key) {
-          _this.unset(key);
-      });
-    }
-    this._listenLocalChange(false);
-    this.set(newModel);
-    this.trigger('sync', this, null, null);
-    this._listenLocalChange(true);
-  },
-
-  _log: function(msg) {
-    if (typeof msg === "undefined" || msg === null) return;
-    if (console && console.log) {
-      console.log(msg);
-    }
-  }
-
-});
-
-module.exports = Backbone.Firebase;
-})();
-
-},{"backbone":18,"client-firebase":21,"underscore":31}],20:[function(require,module,exports){
-var $             = require('jquery-untouched');
-var _             = require('underscore');
-var Backbone      = require('backbone');
-var Firebase      = require('client-firebase');
-Backbone.Firebase = require('./backfire.js');
-Backbone.$        = $;
-
-module.exports = {
-    $: $,
-    _: _,
-    Backbone: Backbone
-};
-
-},{"./backfire.js":19,"backbone":18,"client-firebase":21,"jquery-untouched":30,"underscore":31}],21:[function(require,module,exports){
+},{"underscore":30}],20:[function(require,module,exports){
 (function() {function g(a){throw a;}var j=void 0,k=!0,l=null,o=!1;function aa(a){return function(){return this[a]}}function r(a){return function(){return a}}var t,ba=this;function ca(){}function da(a){a.yc=function(){return a.dd?a.dd:a.dd=new a}}
 function ea(a){var b=typeof a;if("object"==b)if(a){if(a instanceof Array)return"array";if(a instanceof Object)return b;var c=Object.prototype.toString.call(a);if("[object Window]"==c)return"object";if("[object Array]"==c||"number"==typeof a.length&&"undefined"!=typeof a.splice&&"undefined"!=typeof a.propertyIsEnumerable&&!a.propertyIsEnumerable("splice"))return"array";if("[object Function]"==c||"undefined"!=typeof a.call&&"undefined"!=typeof a.propertyIsEnumerable&&!a.propertyIsEnumerable("call"))return"function"}else return"null";
 else if("function"==b&&"undefined"==typeof a.call)return"object";return b}function u(a){return a!==j}function fa(a){var b=ea(a);return"array"==b||"object"==b&&"number"==typeof a.length}function v(a){return"string"==typeof a}function ga(a){return"number"==typeof a}function ha(a){var b=typeof a;return"object"==b&&a!=l||"function"==b}Math.floor(2147483648*Math.random()).toString(36);function ia(a,b,c){return a.call.apply(a.bind,arguments)}
@@ -2618,7 +2748,7 @@ J.prototype.setOnDisconnect=J.prototype.Qd;J.prototype.hb=function(a,b,c){A("Fir
 function Nb(a,b){z(!b||a===k||a===o,"Can't turn on custom loggers persistently.");a===k?("undefined"!==typeof console&&("function"===typeof console.log?Lb=w(console.log,console):"object"===typeof console.log&&(Lb=function(a){console.log(a)})),b&&ob.setItem("logging_enabled","true")):a?Lb=a:(Lb=l,ob.removeItem("logging_enabled"))}J.enableLogging=Nb;J.ServerValue={TIMESTAMP:{".sv":"timestamp"}};J.INTERNAL=Z;J.Context=ke;})();
 module.exports = Firebase;
 
-},{}],22:[function(require,module,exports){
+},{}],21:[function(require,module,exports){
 "use strict";
 /*globals Handlebars: true */
 var base = require("./handlebars/base");
@@ -2651,7 +2781,7 @@ var Handlebars = create();
 Handlebars.create = create;
 
 exports["default"] = Handlebars;
-},{"./handlebars/base":23,"./handlebars/exception":24,"./handlebars/runtime":25,"./handlebars/safe-string":26,"./handlebars/utils":27}],23:[function(require,module,exports){
+},{"./handlebars/base":22,"./handlebars/exception":23,"./handlebars/runtime":24,"./handlebars/safe-string":25,"./handlebars/utils":26}],22:[function(require,module,exports){
 "use strict";
 var Utils = require("./utils");
 var Exception = require("./exception")["default"];
@@ -2832,7 +2962,7 @@ exports.log = log;var createFrame = function(object) {
   return obj;
 };
 exports.createFrame = createFrame;
-},{"./exception":24,"./utils":27}],24:[function(require,module,exports){
+},{"./exception":23,"./utils":26}],23:[function(require,module,exports){
 "use strict";
 
 var errorProps = ['description', 'fileName', 'lineNumber', 'message', 'name', 'number', 'stack'];
@@ -2861,7 +2991,7 @@ function Exception(message, node) {
 Exception.prototype = new Error();
 
 exports["default"] = Exception;
-},{}],25:[function(require,module,exports){
+},{}],24:[function(require,module,exports){
 "use strict";
 var Utils = require("./utils");
 var Exception = require("./exception")["default"];
@@ -2999,7 +3129,7 @@ exports.program = program;function invokePartial(partial, name, context, helpers
 exports.invokePartial = invokePartial;function noop() { return ""; }
 
 exports.noop = noop;
-},{"./base":23,"./exception":24,"./utils":27}],26:[function(require,module,exports){
+},{"./base":22,"./exception":23,"./utils":26}],25:[function(require,module,exports){
 "use strict";
 // Build out our basic SafeString type
 function SafeString(string) {
@@ -3011,7 +3141,7 @@ SafeString.prototype.toString = function() {
 };
 
 exports["default"] = SafeString;
-},{}],27:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 "use strict";
 /*jshint -W004 */
 var SafeString = require("./safe-string")["default"];
@@ -3088,15 +3218,15 @@ exports.escapeExpression = escapeExpression;function isEmpty(value) {
 }
 
 exports.isEmpty = isEmpty;
-},{"./safe-string":26}],28:[function(require,module,exports){
+},{"./safe-string":25}],27:[function(require,module,exports){
 // Create a simple path alias to allow browserify to resolve
 // the runtime on a supported path.
 module.exports = require('./dist/cjs/handlebars.runtime');
 
-},{"./dist/cjs/handlebars.runtime":22}],29:[function(require,module,exports){
+},{"./dist/cjs/handlebars.runtime":21}],28:[function(require,module,exports){
 module.exports = require("handlebars/runtime")["default"];
 
-},{"handlebars/runtime":28}],30:[function(require,module,exports){
+},{"handlebars/runtime":27}],29:[function(require,module,exports){
 /*!
  * jQuery JavaScript Library v1.10.2
  * http://jquery.com/
@@ -12887,7 +13017,7 @@ if ( typeof module === "object" && module && typeof module.exports === "object" 
 
 })( window );
 
-},{}],31:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 //     Underscore.js 1.6.0
 //     http://underscorejs.org
 //     (c) 2009-2014 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
