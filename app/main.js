@@ -1,6 +1,5 @@
 var $ = require('jquery-untouched');
-var backfire = require("client-backfire");
-var Backbone = backfire.Backbone;
+var Backbone = require('backbone');
 Backbone.$ = $;
 
 

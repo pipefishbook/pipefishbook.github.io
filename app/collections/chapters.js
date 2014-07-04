@@ -1,5 +1,5 @@
-var backfire = require("client-backfire");
-var Backbone = backfire.Backbone;
+var Backbone = require('backbone');
+Backbone.Firebase = require('./backbone_firebase');
 
 var Chapter = Backbone.Model.extend({
 
