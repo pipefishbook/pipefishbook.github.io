@@ -1,34 +1,154 @@
-<!DOCTYPE html>
 <html>
 <head>
-  <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <title>The Pipefish Book</title>
-  <link rel="stylesheet" type="text/css" href="css/main.css">
-  <script src="static/bundle.js"></script>
-</head>
-<body>
+  <script src="bundle.js"></script>
+  <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+<header>
+  <span class="site">
+    <h1>The Pipefishbook</h1>
+  </span>
 
-  <header>
-    <div class="header-wrapper">
-      <nav id="navbar">
-      </nav>
-    </div>
-  </header>
+  <nav>
+    <ul>
+      <li><a href="/">The book</a></li>
+      <li><a href="/references">Chapters &amp; Examples</a></li>
+      <li><a href="https://backbone-like.herokuapp.com">Demo</a></li>
+    </ul>
+    
+   <ul class="contact">
+      <li><a href="https://github.com/pipefishbook">&#62208;</a></li>
+      <li><a href="https://twitter.com/pipefishbook">&#62217;</a></li>
+   </ul>
+  </nav>
+
+</header>
+
+<div class="main-wrapper">     
+     <br>
+     
+     <article class="left">  
+       <img src="images/maincover.png"> 
+     </article>
 
 
-  <div id="main" class="container">
-    <p>
-      <img id="logo" src="/images/pipefishbook.png" alt="The Pipefish Book" />
-    </p>
+     <article class="right hero">
+       <h1>Full Stack Web Development with Backbone.js</h1>
+       <h2>by Patrick Mulder</h2>
+      <ul>
+        <li><span>Print</span> USD 29.99</li>
+        <li><span>E-Book</span> USD 23.99</li>
+      </ul>
+      
+      <ul class="sales">
+      <li><a href="http://shop.oreilly.com/product/0636920030799.do">Buy at O'Reilly</a></li>
+      <li><a href="http://www.amazon.com/Full-Stack-Web-Development-Backbone-js/dp/1449370985">Buy at Amazon</a></li>
+      </ul>
+      </article>
 
-    <p>
-       Building great web interfaces requires developers to understand both the MVC pattern, as well as API's and data sources. In this book, I explore building a full-stack JavaScript application with help of JavaScript modules, workflow automation and the use Backbone plugins. 
-    </p>
+     <article class="common about">
+        <h1>About the book</h1>
+
+        <p>
+
+           Building <i>great web interfaces</i> requires developers to understand both the MVC pattern, as well as API's and data sources.
+
+        </p>
+
+        <p>
+
+ In this book, I explore building a <i>full-stack JavaScript application</i> with help of JavaScript modules, workflow automation and the use of Backbone plugins.
+       </p>
+</article>
+
+<article class="common">
+ 
+<h1>What you get</h1>
+
+<ul>
+  <li>Get started quickly by using a Backbone.js and Browserify</li>
+
+<li>Track state and organize data with Backbone models and collections</li>
+
+<li>Capture events from users by using views and manipulating the DOM</li>
+
+<li>Combine Backbone views with advanced HTML templates </li>
+
+<li>Use Backbone to browse remote data sources from an API</li>
+
+<li>Authenticate and authorize client-side interactions</li>
+
+<li>Build a backend API with Node.js and Restify </li>
+
+<li>Set up workflow automation with Bower, Grunt, Yeoman and RequireJS</li>
+
+</ul>
+
+</article>
+
+<article class="common">
+  <h1>This book vs other books</h1>
+
+<table>
+  <tr><td class="noborder"></td><td>Pipefishbook</td><td><a href="http://shop.oreilly.com/product/0636920025344.do">Developing Backbone.js Applications</a></td></tr>
+  <tr><td class="noborder">CommonJS</td><td class="icon ok">&#10003;</td><td class="icon no">&#10060;</td></tr>
+  <tr><td class="noborder">RequireJS</td><td class="icon ok">&#10003;</td><td class="icon ok">&#10003;</td></tr>
+  <tr><td class="noborder">Yeoman</td><td class="icon ok">&#10003;</td><td class="icon no">&#10060;</td></tr>
+  <tr><td class="noborder">Unit Testing</td><td class="icon no">&#10060;</td><td class="icon ok">&#10003;</td></tr>
+  <tr><td class="noborder">RESTful API's</td><td class="icon ok">&#10003;</td><td class="icon no">&#10060;</td></tr>
+  <tr><td class="noborder">JavaScript Promises</td><td class="icon ok">&#10003;</td><td class="icon no">&#10060;</td></tr>
+  <tr><td class="noborder">Authentication</td><td class="icon ok">&#10003;</td><td class="icon no">&#10060;</td></tr>
+</table>
+</article>
 
 
-	</ul>
+<article class="common author">
+<h1>About the Author</h1>
+
+<section class="image">
+  <img src="images/pm_profile.jpg" />
+</section>
+
+  <p>
+Patrick Mulder is a freelance software consultant focusing on JavaScript, web interfaces and measurement systems. He worked as a software engineer on measurement equipment and electronic devices for many companies.
+</p>
+
+<p>
+Since 2008, Patrick has been working on different web applications with Ruby and JavaScript. Patrick blogs at <a href="http://thinkingonthinking.com">thinkingonthinking.com</a>, and has a passion for data-driven interfaces and data in general. 
+</p>
+
+     </article>
   </div>
+
+
+
+</section>
+
+
+<footer>
+
+<section class="left bookmini">
+  <img src="images/site.png">
+</section>
+
+<section class="right sales">
+<h1>Full Stack Web Development with Backbone.js</h1>
+<h2>by Patrick Mulder</h2>
+<ul class="buy">
+      <li><a href="http://shop.oreilly.com/product/0636920030799.do">Buy at O'Reilly</a></li>
+      <li><a href="http://www.amazon.com/Full-Stack-Web-Development-Backbone-js/dp/1449370985">Buy at Amazon</a></li>
+</ul>
+
+
+
+</section>
+
+<section class="common lastword">
+
+<a href="/imprint">Imprint</a>
+
+</footer>
 
 </body>
 
+</html>
